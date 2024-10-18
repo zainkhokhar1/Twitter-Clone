@@ -7,14 +7,14 @@ import ShowPosts from '../components/ShowPosts'
 function Home() {
   return (
     <>
-      <div className='sticky top-0'>
+      <div className='sticky top-0 bg-white'>
         <HomeNavbar />
       </div>
-      <div className='width-full bg-slate-200 h-px'></div>
+      <div className=' bg-slate-200 h-px'></div>
       <div>
         <CreatePost />
       </div>
-      <div className='width-full bg-slate-200 h-px'></div>
+      <div className=' bg-slate-200 h-px'></div>
       <div>
         <ShowPosts />
       </div>

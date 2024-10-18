@@ -28,9 +28,20 @@ const PostSchema = Schema({
     ],
     comments: [
         {
-            type: Schema.Types.ObjectId, ref: 'User',
-            default: [],
-        },
+            owner : {
+                type : Schema.Types.ObjectId, ref: 'User',
+                required : true,
+            },
+            text : {
+                type : String,
+                required : true,
+                minlength : 3,
+            },
+            createdAt : {
+                type : Date,
+                default : Date.now,
+            },
+        }, 
     ],
     shares: [
         {

@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt'
 let SECRET = 'THISIS$3MYSECRET3'
 export const SignupUser = async (req, res) => {
     try {
-        let { name, email, password, image } = req.body;
+        let { name, email, password, image,createdAt } = req.body;
         let userChecking = await User.findOne({ email });
         if (userChecking) {
             return res.status(401).json({ error: 'User Already Exists' })
@@ -17,6 +17,7 @@ export const SignupUser = async (req, res) => {
                 email,
                 password: smartPassword,
                 image,
+                createdAt,
             });
             await newUser.save();
             if (newUser) {

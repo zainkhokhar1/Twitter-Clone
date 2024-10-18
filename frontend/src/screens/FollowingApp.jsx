@@ -6,11 +6,14 @@ import RightSidebar from './RightSidebar'
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../components/ContextApi';
+import HomeNavbar from '../components/HomeNavbar'
+import CreatePost from '../components/CreatePost'
+import FollowingPosts from '../components/FollowingPosts.jsx'
 
-function FullApp() {
+const FollowingApp = () => {
     const Navigate = useNavigate();
-    
-    const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+    const { isAuthenticated } = useAuth0();
     const fetch = async () => {
         if (isAuthenticated) {
         }
@@ -28,7 +31,19 @@ function FullApp() {
                     </div>
                     <div className="w-px bg-gray-300"></div>
                     <div className="mainmax-w-[40rem]">
-                        <Home />
+                        <>
+                            <div className='sticky top-0 bg-white'>
+                                <HomeNavbar />
+                            </div>
+                            <div className=' bg-slate-200 h-px'></div>
+                            <div>
+                                <CreatePost />
+                            </div>
+                            <div className=' bg-slate-200 h-px'></div>
+                            <div>
+                                <FollowingPosts />
+                            </div>
+                        </>
                     </div>
                     <div className="w-px bg-gray-300"></div>
                     <div>
@@ -37,7 +52,7 @@ function FullApp() {
                 </div> : Navigate('/signup')
             }
         </>
-    )
-}
+    );
+};
 
-export default FullApp
+export default FollowingApp;

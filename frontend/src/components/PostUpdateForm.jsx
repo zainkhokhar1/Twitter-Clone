@@ -13,24 +13,36 @@ function PostUpdateForm() {
     const { Id } = useParams();
     const location = useLocation();
     const onSubmit = async (data) => {
+        let resCloudinary;
+        let url;
+        let updationData;
         try {
             console.log(data)
             console.log(Id);
-            const cloudData = new FormData();
-            cloudData.append("file", data.image[0]);
-            cloudData.append("upload_preset", "mycloud");
-            cloudData.append("cloud_name", "dbyoondqs");
-            const resCloudinary = await axios.post("https://api.cloudinary.com/v1_1/dbyoondqs/image/upload", cloudData);
-            let url = resCloudinary.data.url;
-            if (!resCloudinary.data.url) {
-                return toast.error('Failed to upload the image');
+            if(data.image.length>0){
+                const cloudData = new FormData();
+                cloudData.append("file", data.image[0]);
+                cloudData.append("upload_preset", "mycloud");
+                cloudData.append("cloud_name", "dbyoondqs");
+                resCloudinary = await axios.post("https://api.cloudinary.com/v1_1/dbyoondqs/image/upload", cloudData);
+                url = resCloudinary.data.url;
+                if (!resCloudinary.data.url) {
+                    return toast.error('Failed to upload the image');
+                }
+                updationData = {
+                    text: data.text,
+                    image: url,
+                    updatedAt: Date.now(),
+                    userId: id,
+                };
             }
-            let updationData = {
-                text: data.text,
-                image: url,
-                updatedAt: Date.now(),
-                userId: id,
-            };
+            else{
+                updationData = {
+                    text: data.text,
+                    updatedAt: Date.now(),
+                    userId: id,
+                };
+            }
             let responseUpdation = await axios.post(`http://localhost:4000/post/update/${Id}`, updationData);
             if (responseUpdation.data.success) {
                 toast.success(responseUpdation.data.success);
@@ -65,7 +77,7 @@ function PostUpdateForm() {
                         {errors.caption && <span>Post must have 3 Characters</span>}
                         <label className="form-control w-full max-w-xs">
                             <label htmlFor="file" className='p-2 text-lg  font-semibold'>Update Image</label>
-                            <input type="file" id='file' className="file-input file-input-bordered w-full max-w-xs" {...register('image')} />
+                            <input type="file" id='file' accept='image/*' className="file-input file-input-bordered w-full max-w-xs" {...register('image')} />
                             <div className="label">
                             </div>
                         </label>
