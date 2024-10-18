@@ -96,22 +96,43 @@ export const updatePost = async (req, res) => {
     try {
         let { id } = req.params;
         console.log(id);
-        let { text, userId, image, updatedAt } = req.body;
-        let post = await Post.find({ _id: id }).populate('owner');
-        if (post) {
-            console.log(post[0].owner._id)
-            console.log(userId)
-            if (post[0].owner._id.toString() === userId) {
-                let updationPost = await Post.findByIdAndUpdate(id, { text, image, createdAt: updatedAt });
-                if (updationPost) {
-                    return res.status(200).json({ success: 'Post Updated Successfully' });
+        if (req.body.image) {
+            let { text, userId, image, updatedAt } = req.body;
+            let post = await Post.find({ _id: id }).populate('owner');
+            if (post) {
+                console.log(post[0].owner._id)
+                console.log(userId)
+                if (post[0].owner._id.toString() === userId) {
+                    let updationPost = await Post.findByIdAndUpdate(id, { text, image, createdAt: updatedAt });
+                    if (updationPost) {
+                        return res.status(200).json({ success: 'Post Updated Successfully' });
+                    }
+                }
+                else {
+                    console.log('error running')
+                    return res.status(401).json({ error: "Not Authorized User" });
                 }
             }
-            else {
-                console.log('error running')
-                return res.status(401).json({ error: "Not Authorized User" });
+        }
+        else {
+            let { text, userId, updatedAt } = req.body;
+            let post = await Post.find({ _id: id }).populate('owner');
+            if (post) {
+                console.log(post[0].owner._id)
+                console.log(userId)
+                if (post[0].owner._id.toString() === userId) {
+                    let updationPost = await Post.findByIdAndUpdate(id, { text, createdAt: updatedAt });
+                    if (updationPost) {
+                        return res.status(200).json({ success: 'Post Updated Successfully' });
+                    }
+                }
+                else {
+                    console.log('error running')
+                    return res.status(401).json({ error: "Not Authorized User" });
+                }
             }
         }
+
     }
     catch (e) {
         console.log(e.message);
@@ -121,7 +142,7 @@ export const updatePost = async (req, res) => {
 
 export const UserPosts = async (req, res) => {
     try {
-        let {id} = req.params;
+        let { id } = req.params;
         let allPosts = await Post.find({ owner: id }).populate('owner');
         if (allPosts) {
             return res.status(200).json({ success: 'Successfully Got all Posts', allPosts });
@@ -129,6 +150,68 @@ export const UserPosts = async (req, res) => {
     }
     catch (e) {
         res.status(401).json({ error: 'Failed to get the Data(Backend)' });
+        console.log(e.message);
+    }
+}
+
+export const showComments = async (req, res) => {
+    try {
+        let { id } = req.params;
+        let post = await Post.findById({ _id: id }).populate({
+            path: 'comments.owner',
+            model: 'User'
+        });
+        if (post) {
+            console.log(post);
+            let comments = post.comments;
+            return res.status(200).json({ success: 'These are posts comments', comments });
+        }
+        else {
+            return res.status(401).json({ error: "No such post founded" });
+        }
+    }
+    catch (e) {
+        console.log(e.message);
+        res.status(400).json({ error: 'Error in the backend' });
+    }
+}
+
+export const createComment = async (req, res) => {
+    try {
+        let { id } = req.params;
+        let { userId, text, createdAt } = req.body;
+        let post = await Post.findById({ _id: id });
+        if (post) {
+            await post.comments.push({
+                owner: userId,
+                text,
+                createdAt,
+            });
+            await post.save();
+            return res.status(200).json({ success: "Comment Added successfully", post });
+        }
+        else {
+            return res.status(401).json({ error: 'No Post Founded' });
+        }
+    }
+    catch (e) {
+        console.log(e.message);
+        res.status(500).json({ error: 'No Post Founded in Backend' });
+    }
+}
+
+export const followingPosts = async (req, res) => {
+    try {
+        let { followers } = req.body;
+        let allPosts = await Post.find({
+            owner: { $in: followers }
+        }).populate('owner');
+        if (allPosts) {
+            res.status(200).json({ success: "Got posts successfully", allPosts });
+        }
+    }
+    catch (e) {
+        res.status(400).json({ error: 'Failed to get data from the backend' });
         console.log(e.message);
     }
 }

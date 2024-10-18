@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axios, { all } from 'axios'
 import DeletePost from './DeletePost';
 import { Link } from 'react-router-dom';
 import { useid } from './ContextApi';
@@ -8,13 +8,30 @@ import toast from 'react-hot-toast';
 import CommentsModal from './CommentsModal';
 function ShowPosts() {
     let [posts, setPosts] = useState([]);
+    let [followers, setFollowers] = useState([]);
     let [id] = useid();
-    let [currentPostId,setCurrentPostId] = useState();
+    let [currentPostId, setCurrentPostId] = useState();
     let userId = id;
+    let userData = async () => {
+        try {
+            let user = await axios.get(`http://localhost:4000/user/${id}`);
+            setFollowers(user.data.user.followers);
+            console.log(user.data.user.followers)
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     const getAllPosts = async () => {
-        let allPosts = await axios.get('http://localhost:4000/post/all');
-        if (allPosts.data.success) {
-            setPosts(allPosts.data.allPosts);
+        console.log(followers)
+        if (followers && followers.length > 0) {
+            console.log('running')
+            let allPosts = await axios.post('http://localhost:4000/post/followingPosts', {followers});
+            console.log('running')
+            console.log(allPosts);
+            if (allPosts.data.success) {
+                setPosts(allPosts.data.allPosts);
+            }
         }
     }
     const handleLikes = async (event) => {
@@ -61,17 +78,22 @@ function ShowPosts() {
         }
     }
     useEffect(() => {
+        userData();
         getAllPosts();
     }, []);
-    const handleComments = (id)=>{
-        try{
+    useEffect(() => {
+        getAllPosts();
+    }, [followers]);
+    const handleComments = (id) => {
+        try {
             setCurrentPostId(id);
             document.getElementById('my_modal_5').showModal();
         }
-        catch(e){
+        catch (e) {
             console.log(e.message);
         }
     }
+    console.log(posts)
     return (
         <>
             {
@@ -105,17 +127,17 @@ function ShowPosts() {
                             <img className='max-w-[25rem] xl:min-w-[30rem] max-h-[30rem] min-h-[20rem] xl:min-h-[28rem] object-cover rounded-xl' src={singlePost.image} alt="PostImage" />
                         </div>
                         <div className="socials ml-16 flex items-center space-x-20">
-                            <p onClick={()=>{handleComments(singlePost._id)}}  className='p-2 hover:bg-blue-100 w-fit flex rounded-full duration-100'>
+                            <p onClick={() => { handleComments(singlePost._id) }} className='p-2 hover:bg-blue-100 w-fit flex rounded-full duration-100'>
                                 <svg fill='CurrentColor' viewBox="0 0 24 24" aria-hidden="true" className="w-6 text-slate-500 hover:text-blue-700 cursor-pointer duration-200 r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-1xvli5t r-1hdv0qi r-12c3ph5"><g><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"></path></g></svg>
-                             <span className='pl-1 text-center'>   {
-                            singlePost.comments.length
-                                      }
-                        </span>
+                                <span className='pl-1 text-center'>   {
+                                    singlePost.comments.length
+                                }
+                                </span>
                             </p>
                             {
-                                currentPostId ? <CommentsModal postId={currentPostId}/> : ''
+                                currentPostId ? <CommentsModal postId={currentPostId} /> : ''
                             }
-                            
+
                             <span >
                                 <p className='hover:text-green-700 flex repost w-fit rounded-full p-2 hover:bg-green-100 duration-100'>
                                     <svg fill='CurrentColor' viewBox="0 0 24 24" aria-hidden="true" className="w-5 text-slate-500

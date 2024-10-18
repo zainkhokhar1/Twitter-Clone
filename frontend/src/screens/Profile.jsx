@@ -6,17 +6,48 @@ import RightSidebar from './RightSidebar';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import DeletePost from '../components/DeletePost';
+import CommentsModal from '../components/CommentsModal'
+import toast from 'react-hot-toast';
 function Profile() {
     let [userid, setId] = useid();
+    let userFormattedDate;
+    let [currentPostId, setCurrentPostId] = useState();
+    let [formattedDate, setFormattedDate] = useState();
+    let [following,setFollowing] = useState(false);
     let { id } = useParams();
     let userId = id;
     let [user, setUser] = useState([]);
+    let [userVisiting, setuserVisiting] = useState([]);
     let [Posts, setPosts] = useState([]);
+    const visitingUser = async () => {
+        try {
+            let user = await axios.get(`http://localhost:4000/user/${userid}`);
+            if (user.data.success) { 
+                setuserVisiting(user.data.user);
+                console.log(user.data.user)
+                if(user.data.user.followers.includes(userId)){
+                    setFollowing(true);
+                }
+            }
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
     const userData = async () => {
         try {
             let user = await axios.get(`http://localhost:4000/user/${id}`);
             if (user.data.success) {
                 setUser(user.data.user);
+                userFormattedDate = new Date(user.data.user.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                });
+                setFormattedDate(userFormattedDate);
             }
             else if (user.data.error) {
                 console.log('Error got from backend');
@@ -30,7 +61,6 @@ function Profile() {
         try {
             let userPost = await axios.get(`http://localhost:4000/user/posts/${id}`)
             if (userPost.data.success) {
-                console.log('Got user Data successfully');
                 setPosts(userPost.data.allPosts);
             }
         }
@@ -83,8 +113,30 @@ function Profile() {
     useEffect(() => {
         userData();
         userPosts();
+        visitingUser();
     }, []);
-    console.log(user);
+    const handleComments = (id) => {
+        try {
+            setCurrentPostId(id);
+            document.getElementById('my_modal_5').showModal();
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
+    const handleFollow=async()=>{
+        try{
+            let follow = await axios.post(`http://localhost:4000/user/follow/${userid}`,{id : user._id});
+            if(follow.data.success){
+                toast.success(follow.data.success);
+                setFollowing(follow.data.isFollowing);
+            }
+        }
+        catch(e){
+            console.log(e.message);
+        }
+    }
+    console.log(following);
     return (
         <>
             {
@@ -102,8 +154,8 @@ function Profile() {
                                     {user.name}
                                 </div>
                             </div>
-                            <div className='h-72 w-full bg-red-700'>
-                                <img className='w-full h-full object-cover' src="https://img.freepik.com/premium-photo/minimal-geometric-background-copy-space_1179130-412585.jpg?w=740" alt="backgroundImage" />
+                            <div className='h-72 w-full'>
+                                <img className='w-full h-full object-cover' src={user.coverImage ? user.coverImage : "https://img.freepik.com/premium-photo/minimal-geometric-background-copy-space_1179130-412585.jpg?w=740"} />
                             </div>
                             <div className='absolute border-2 cursor-pointer duration-200 border-black w-44 h-44 rounded-full -bottom-20 opacity-95 hover:opacity-100 z-0 ml-2'>
                                 <img className='z-0 object-cover w-full h-full rounded-full' src={user.image ? user.image : 'https://img.freepik.com/premium-photo/little-cute-boy-with-diamod-her-hands_1057389-81291.jpg?w=740'} alt="ProfileImage" />
@@ -111,9 +163,15 @@ function Profile() {
                         </div>
                         {
                             userid === user._id ? <div className='w-fit relative ml-[27rem]'>
-                                <button className='bg-slate-900 hover:bg-slate-950 duration-200 px-6 py-2 rounded-3xl mt-4 text-white text-nowrap'>Edit Profile</button>
+                                <button className='bg-slate-900 hover:bg-slate-950 duration-200 px-6 py-2 rounded-3xl mt-4 text-white text-nowrap'><Link to={`/profile/edit/${user._id}`}>Edit Profile</Link></button>
                             </div> : <div className='w-fit relative ml-[27rem]'>
-                                <button className='bg-slate-900 hover:bg-slate-950 duration-200 px-6 py-2 rounded-3xl mt-4 text-white text-nowrap'>Home</button>
+                                {
+                                // userVisiting ? userVisiting.followers ?
+                                //     userVisiting.followers.includes(userId)
+                                    following ? <button onClick={handleFollow} className='bg-slate-900 hover:bg-slate-950 duration-200 px-6 py-2 rounded-3xl mt-4 text-white text-nowrap'>UnFollow</button> : <button className='bg-slate-900 hover:bg-slate-950 duration-200 px-6 py-2 rounded-3xl mt-4 text-white text-nowrap' onClick={handleFollow}>Follow</button>
+                                    // : "" : 
+                                    // ""
+                                    }
                             </div>
                         }
                         <div className='mt-10 w-full h-fit pb-10 pl-4'>
@@ -162,9 +220,17 @@ function Profile() {
                                             <img className='max-w-full max-h-full object-contain rounded-xl' src={singlePost.image} alt="PostImage" />
                                         </div>
                                         <div className="socials ml-16 flex items-center space-x-20">
-                                            <p className='p-2 hover:bg-blue-100 w-fit rounded-full duration-100 '>
+                                            <p onClick={() => { handleComments(singlePost._id) }} className='p-2 hover:bg-blue-100 w-fit rounded-full duration-100 flex'>
                                                 <svg fill='CurrentColor' viewBox="0 0 24 24" aria-hidden="true" className="w-6 text-slate-500 hover:text-blue-700 cursor-pointer duration-200 r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-1xvli5t r-1hdv0qi r-12c3ph5"><g><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"></path></g></svg>
+                                                <span className='pl-1 '>
+                                                    {
+                                                        singlePost.comments.length
+                                                    }
+                                                </span>
                                             </p>
+                                            {
+                                                currentPostId ? <CommentsModal postId={currentPostId} /> : ''
+                                            }
                                             <span>
                                                 <p className='hover:text-green-700 flex repost w-fit rounded-full p-2 hover:bg-green-100 duration-100'>
                                                     <svg fill='CurrentColor' viewBox="0 0 24 24" aria-hidden="true" className="w-5 text-slate-500
@@ -201,6 +267,13 @@ function Profile() {
                                     </div>
                                 </div>
                         }
+                        <div className='flex items-center justify-center my-2 h-16 w-full text-lg text-fuchsia-600'>
+                            <span className='text-sm text-purple-900'>
+                                {
+                                    user.createdAt ? <> Joined on &nbsp; {formattedDate ? formattedDate : ""}</> : "No record Founded"
+                                }
+                            </span>
+                        </div>
                     </div>
                     <div className="w-px bg-gray-300"></div>
                     <div>

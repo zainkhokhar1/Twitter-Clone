@@ -1,87 +1,51 @@
-
-import React, { useState, useEffect } from 'react'
-import toast from 'react-hot-toast'
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useForm } from "react-hook-form";
-import './CreatePost.css'
+import React, { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast';
 import { useid } from './ContextApi';
-function CreatePostModal() {
-    let [id, setId] = useid();
-    let [image, setImage] = useState([]);
+function CreateComment({postId}) {
+    let [id,setId] = useid();
+    let [image,setImage] = useState();
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
-    let Navigate = useNavigate();
     const onSubmit = async (data) => {
-        try {
-            const formData = new FormData();
-            formData.append("file", data.image[0]);
-            formData.append("upload_preset", "mycloud");
-            formData.append("cloud_name", "dbyoondqs");
-            const cloudData = await axios.post('https://api.cloudinary.com/v1_1/dbyoondqs/image/upload', formData);
-            let url = cloudData.data.secure_url;
-            if (!cloudData.data.secure_url) {
-                return toast.error('Failed to upload image');
-            }
-            let id = localStorage.getItem('userId');
-            let postData = {
-                owner: id,
-                image: url,
-                text: data.text,
-                date: Date.now(),
-            };
-            let CreatingPost = await axios.post('http://localhost:4000/post/create', postData);
-            if (CreatingPost.data.success) {
-                toast.success('Post Created Successfully');
-                document.getElementById('my_modal_3').close();
-                Navigate('/');
-                reset();
-            }
-            else if (CreatingPost.data.error) {
-                toast.error(CreatingPost.data.error);
-            }
+      console.log(data);
+      let commentData = {
+        userId : id,
+        text : data.text,
+        createdAt : Date.now(),
+      }
+      try{
+        let res = await axios.post(`http://localhost:4000/post/createComment/${postId}`,commentData);
+        if(res.data.success){
+            toast.success('Comment Created Successfully');
+            reset();
         }
-        catch (e) {
-            console.log(e.message);
-            toast.error("Failed to Create post");
-        }
-    };
-    const handleClose = () => {
-        document.getElementById('my_modal_3').close();
+      }
+      catch(e){
+        toast.error('Error while creating the comment');
+        console.log(e.message);
+      }
     }
-    const fetchUser = async () => {
-        try {
-            let user = await axios.get(`http://localhost:4000/user/${id}`);
-            if (user.data.success) {
-                setImage(user.data.user.image);
-                console.log('Successfully got the data');
-            }
-        }
-        catch (e) {
-            console.log(e.message);
+    const getUser = async()=>{
+        let res1 = await axios.get(`http://localhost:4000/user/${id}`);
+        if(res1.data.success){
+          setImage(res1.data.user.image);
+          console.log(res1.data.user.image);
         }
     }
-    useEffect(() => {
-        fetchUser();
-    }, [])
-    return (
-        <>
-            <div>
-                <dialog id="my_modal_3" className="modal modal-bottom sm:modal-middle">
-                    <div className="modal-box relative">
-                        <span className='cursor-pointer text-2xl absolute' onClick={handleClose}>
-                            X
-                        </span>
-                        <h3 className="font-bold text-2xl text-blue-600 text-center ">Create Post</h3>
-                        <div className="modal-action w-fit">
-                            <form onSubmit={handleSubmit(onSubmit)} method="dialog">
-                                <div className='h-96  bg-slate-50 flex w-[29rem] pl-5'>
+    useEffect(()=>{
+        getUser();
+    },[])
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} method="dialog" className='h-fit'>
+     <div className='h-24 bg-slate-50 flex w-[29rem] pl-5'>
                                     <div className="avatar h-full cursor-pointer pr-2">
                                         <div className="ml- mt-5 w-12 h-12 rounded-full opacity-85 hover:opacity-100 duration-200">
-                                            <img src={image ? image : "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"} />
+                                            <img src={image ? image :"https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"}/>
                                         </div>
                                     </div>
-                                    <div className="post mx-4 min-w-80 h-96">
-                                        <textarea type='text' placeholder='What is happening?!' className='overflow-y-auto h-80 max-h-96 w-full p-1 text-xl mt-7 focus:outline-none bg-transparent break-words resize-none scrollbar-hide' {...register("text", { required: true, minLength: 2 })} />
+                                    <div className="post mx-4 min-w-80 h-16">
+                                        <textarea type='text' placeholder='Comment?!' className='overflow-y-auto h-fit max-h-96 w-full p-1 text-xl mt-7 focus:outline-none bg-transparent break-words resize-none scrollbar-hide' {...register("text", { required: true, minLength: 2 })} />
                                         {errors.text && <span className='text-red-500'>Some text is required</span>}
                                     </div>
                                 </div>
@@ -91,7 +55,7 @@ function CreatePostModal() {
                                         <label htmlFor="image">
                                             <svg viewBox="0 0 24 24" fill='CurrentColor' aria-hidden="true" className=" w-6 cursor-pointer r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-z80fyv r-19wmn03 text-[rgb(29,155,240)]" ><g><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z"></path></g></svg>
                                         </label>
-                                        <input type="file" id='image' className='hidden' {...register("image", { required: true })} accept='image/*' />
+                                        <input id='image' className='hidden'accept='image/*' />
                                     </div>
                                     <div >
                                         <svg fill='CurrentColor' viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 cursor-pointer r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-z80fyv r-19wmn03 text-[rgb(29,155,240)]"><g><path d="M3 5.5C3 4.119 4.12 3 5.5 3h13C19.88 3 21 4.119 21 5.5v13c0 1.381-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.881 3 18.5v-13zM5.5 5c-.28 0-.5.224-.5.5v13c0 .276.22.5.5.5h13c.28 0 .5-.224.5-.5v-13c0-.276-.22-.5-.5-.5h-13zM18 10.711V9.25h-3.74v5.5h1.44v-1.719h1.7V11.57h-1.7v-.859H18zM11.79 9.25h1.44v5.5h-1.44v-5.5zm-3.07 1.375c.34 0 .77.172 1.02.43l1.03-.86c-.51-.601-1.28-.945-2.05-.945C7.19 9.25 6 10.453 6 12s1.19 2.75 2.72 2.75c.85 0 1.54-.344 2.05-.945v-2.149H8.38v1.032H9.4v.515c-.17.086-.42.172-.68.172-.76 0-1.36-.602-1.36-1.375 0-.688.6-1.375 1.36-1.375z"></path></g></svg>
@@ -107,18 +71,12 @@ function CreatePostModal() {
                                     </div>
                                     <div className='pl-6'>
                                         <button className='bg-blue-500 hover:bg-blue-600 font-bold duration-200 text-white px-4 py-2 rounded-full'>
-                                            Post
+                                            Comment
                                         </button>
                                     </div>
                                 </div>
-                            </form>
-
-                        </div>
-                    </div>
-                </dialog>
-            </div>
-        </>
-    )
+    </form>
+  )
 }
 
-export default CreatePostModal
+export default CreateComment

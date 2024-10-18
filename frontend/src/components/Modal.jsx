@@ -27,6 +27,7 @@ function Modal() {
                 email: data.email,
                 password: data.password,
                 image: url,
+                createdAt : Date.now(),
             };
             let result = await axios.post('http://localhost:4000/user/signup', updationData);
             console.log(result.data.newUser._id)
@@ -90,7 +91,7 @@ function Modal() {
                                 {errors.password && <span>Password must be of 5 digits</span>}
                                 <label className="form-control w-full max-w-xs">
                                     <label htmlFor="file" className='p-2 text-lg '>Profile Photo</label>
-                                    <input type="file" id='file' className="file-input file-input-bordered w-full max-w-xs" {...register('image')} />
+                                    <input type="file" id='file' accept='image/*' className="file-input file-input-bordered w-full max-w-xs" {...register('image')} />
                                     <div className="label">
                                     </div>
                                 </label>
